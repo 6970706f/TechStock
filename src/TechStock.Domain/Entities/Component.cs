@@ -2,8 +2,14 @@ namespace TechStock.Domain.Entities;
 
 public class Component : Product
 {
-    public Component(int id, string name, decimal price, string manufacturer)
-        : base(id, name, price)
+    public Component(
+        int id,
+        string name,
+        decimal price,
+        int quantity,
+        Store store,
+        string manufacturer
+    ) : base(id, name, price, quantity, store)
     {
         if (string.IsNullOrWhiteSpace(manufacturer))
             throw new Exception();

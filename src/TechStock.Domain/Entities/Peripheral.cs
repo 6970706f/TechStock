@@ -2,15 +2,21 @@ namespace TechStock.Domain.Entities;
 
 public class Peripheral : Product
 {
-    public Peripheral(int id, string name, decimal price, string connectionType)
-        : base(id, name, price)
+    public Peripheral(
+        int id,
+        string name,
+        decimal price,
+        int quantity,
+        Store store,
+        string connectionType
+    ) : base(id, name, price, quantity, store)
     {
         if (string.IsNullOrWhiteSpace(connectionType))
             throw new Exception();
         
         ConnectionType = connectionType;
     }
-    
+
     public string ConnectionType { get; private set; }
 
     public void ChangeConnectionType(string type)

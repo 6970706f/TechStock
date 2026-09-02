@@ -17,7 +17,7 @@ public class User
         if (role != null)
             Role = (Role)role;
 
-        IdStore = store.Id;
+        StoreId = store.Id;
         Store = store;
     }
 
@@ -26,7 +26,7 @@ public class User
     public string PasswordHash { get; private set; }
     public Role Role { get; private set; } = Role.User;
 
-    public int IdStore { get; private set; }
+    public int StoreId { get; private set; }
     public Store Store { get; private set; } = null!;
 
     public void ChangeName(string name)

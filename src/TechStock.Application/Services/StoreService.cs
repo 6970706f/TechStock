@@ -22,33 +22,32 @@ public class StoreService(
             Role.Admin
         );
 
+        store.AddUser(user);
+
         userRepository.Add(user);
         storeRepository.Add(store);
     }
 
     public void Delete()
     {
-        storeRepository.Delete(GetLoggedStoreOrThrow());
+        var store = LoggedUser.Get().Store;
+
+        foreach (var user in store.Users)
+            userRepository.Delete(user);
+
+        storeRepository.Delete(store);
     }
 
     public StoreResponse GetStore()
     {
-        return ToDTO(GetLoggedStoreOrThrow());
+        return ToDTO(LoggedUser.Get().Store);
     }
 
-    public void ChangeName(StoreChangeNameRequest request)
+    public void ChangeName(StoreUpdateRequest request)
     {
-        var store = GetLoggedStoreOrThrow();
+        var store = LoggedUser.Get();
 
         store.ChangeName(request.Name);
-    }
-
-    private Store GetLoggedStoreOrThrow()
-    {
-        User user = LoggedUser.Current
-            ?? throw new Exception();
-        
-        return user.Store;
     }
 
     private StoreResponse ToDTO(Store store)

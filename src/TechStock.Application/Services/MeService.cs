@@ -4,43 +4,35 @@ using TechStock.Infrastructure.Repositories;
 
 namespace TechStock.Application.Services;
 
-public class UserService(
+public class MeService(
     UserRepository repository
 )
 {
     public void Delete()
     {
-        repository.Delete(GetLoggedUserOrThrow());
+        repository.Delete(LoggedUser.Get());
     }
 
-    public UserResponse GetLoggedUser()
+    public UserResponse GetMe()
     {
-        return ToDTO(GetLoggedUserOrThrow());
+        return ToDTO(LoggedUser.Get());
     }
 
     public void ChangeName(UserChangeNameRequest request)
     {
-        var user = GetLoggedUserOrThrow();
+        var user = LoggedUser.Get();
 
         user.ChangeName(request.Name);
     }
 
     public void ChangePassword(UserChangePasswordRequest request)
     {
-        var user = GetLoggedUserOrThrow();
+        var user = LoggedUser.Get();
 
-        if (request.OldPassword != user.PasswordHash || request.ConfirmPassword != request.NewPassword)
+        if (request.OldPassword != user.PasswordHash || request.NewPassword != request.ConfirmPassword)
             throw new Exception();
 
         user.ChangePassword(request.NewPassword);
-    }
-
-    private User GetLoggedUserOrThrow()
-    {
-        User user = LoggedUser.Current
-            ?? throw new Exception();
-        
-        return user;
     }
 
     private UserResponse ToDTO(User user)

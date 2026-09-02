@@ -13,4 +13,10 @@ public static class LoggedUser
     {
         Current = null;
     }
+
+    public static User Get()
+    {
+        return Current
+            ?? throw new Exception();
+    }
 }

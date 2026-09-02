@@ -4,7 +4,7 @@ public record StoreCreateRequest(
     string Name
 );
 
-public record StoreChangeNameRequest(
+public record StoreUpdateRequest(
     string Name
 );
 

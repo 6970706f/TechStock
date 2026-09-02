@@ -2,7 +2,7 @@ namespace TechStock.Domain.Entities;
 
 public class Product
 {
-    public Product(int id, string name, decimal price)
+    public Product(int id, string name, decimal price, int quantity, Store store)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new Exception();
@@ -12,11 +12,19 @@ public class Product
         Id = id;
         Name = name;
         Price = price;
+        Quantity = quantity;
+
+        StoreId = store.Id;
+        Store = store;
     }
 
     public int Id { get; private set; }
     public string Name { get; private set; }
     public decimal Price { get; private set; }
+    public int Quantity { get; private set; }
+
+    public int StoreId { get; private set; }
+    public Store Store { get; private set; }
 
     public void ChangeName(string name)
     {
@@ -32,5 +40,13 @@ public class Product
             throw new Exception();
         
         Price = price;
+    }
+
+    public void ChangeQuantity(int quantity)
+    {
+        if (quantity < 0)
+            throw new Exception();
+        
+        Quantity = quantity;
     }
 }

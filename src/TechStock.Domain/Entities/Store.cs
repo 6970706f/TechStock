@@ -24,4 +24,13 @@ public class Store
         
         Name = name;
     }
+
+    public void AddUser(User user)
+        => Users.Add(user);
+
+    public void AddProduct(Product product)
+        => Products.Add(product);
+    
+    public void RemoveProduct(Product product)
+        => Products.Remove(product);
 }
