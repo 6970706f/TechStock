@@ -8,14 +8,6 @@ public class UserService(
     UserRepository repository
 )
 {
-    public void Add(UserRequest request)
-    {
-        int id = Random.Shared.Next();
-        var user = new User(id, request.Name, request.Password);
-
-        repository.Add(user);
-    }
-
     public void Delete()
     {
         repository.Delete(GetLoggedUserOrThrow());
@@ -26,18 +18,21 @@ public class UserService(
         return ToDTO(GetLoggedUserOrThrow());
     }
 
-    public void ChangeName(string name)
+    public void ChangeName(UserChangeNameRequest request)
     {
         var user = GetLoggedUserOrThrow();
 
-        user.ChangeName(name);
+        user.ChangeName(request.Name);
     }
 
-    public void ChangePassword(string password)
+    public void ChangePassword(UserChangePasswordRequest request)
     {
         var user = GetLoggedUserOrThrow();
 
-        user.ChangePassword(password);
+        if (request.OldPassword != user.PasswordHash || request.ConfirmPassword != request.NewPassword)
+            throw new Exception();
+
+        user.ChangePassword(request.NewPassword);
     }
 
     private User GetLoggedUserOrThrow()

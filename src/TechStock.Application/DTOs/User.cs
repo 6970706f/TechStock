@@ -1,8 +1,18 @@
 namespace TechStock.Application.DTOs;
 
-public record UserRequest(
+public record UserCreateRequest(
     string Name,
     string Password
+);
+
+public record UserChangeNameRequest(
+    string Name
+);
+
+public record UserChangePasswordRequest(
+    string OldPassword,
+    string NewPassword,
+    string ConfirmPassword
 );
 
 public record UserResponse(

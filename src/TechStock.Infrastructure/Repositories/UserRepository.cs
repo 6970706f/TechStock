@@ -11,10 +11,4 @@ public class UserRepository
 
     public void Delete(User user)
         => Users.Remove(user);
-
-    public ICollection<User> GetAll()
-        => Users.ToList();
-    
-    public User? GetById(int id)
-        => Users.FirstOrDefault(user => user.Id == id);
 }
