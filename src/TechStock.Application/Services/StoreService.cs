@@ -1,3 +1,4 @@
+using ErrorOr;
 using TechStock.Application.DTOs;
 using TechStock.Domain.Entities;
 using TechStock.Domain.Enums;
@@ -10,9 +11,22 @@ public class StoreService(
     UserRepository userRepository
 )
 {
-    public void Add(StoreCreateRequest storeRequest, UserCreateRequest userRequest)
+    public ErrorOr<Created> Add(StoreCreateRequest storeRequest, UserCreateRequest userRequest)
     {
         var store = new Store(Random.Shared.Next(), storeRequest.Name);
+
+        if (string.IsNullOrWhiteSpace(userRequest.Name))
+            return Error.Validation(
+                code: "User.NameValidation",
+                description: "invalid credentials"
+            );
+        
+        if (string.IsNullOrWhiteSpace(userRequest.Password) ||
+        userRequest.ConfirmPassword != userRequest.Password)
+            return Error.Validation(
+                code: "User.Password",
+                description: "invalid credentials"
+            );
 
         var user = new User(
             Random.Shared.Next(),
@@ -26,28 +40,64 @@ public class StoreService(
 
         userRepository.Add(user);
         storeRepository.Add(store);
+
+        return Result.Created;
     }
 
-    public void Delete()
+    public ErrorOr<Deleted> Delete()
     {
-        var store = LoggedUser.Get().Store;
+        var store = GetStoreErrorOr();
 
-        foreach (var user in store.Users)
+        if (store.IsError)
+            return store.Errors;
+
+        foreach (var user in store.Value.Users)
             userRepository.Delete(user);
 
-        storeRepository.Delete(store);
+        storeRepository.Delete(store.Value);
+
+        return Result.Deleted;
     }
 
-    public StoreResponse GetStore()
+    public ErrorOr<StoreResponse> GetStore()
     {
-        return ToDTO(LoggedUser.Get().Store);
+        var store = GetStoreErrorOr();
+
+        if (store.IsError)
+            return store.Errors;
+
+        return ToDTO(store.Value);
     }
 
-    public void ChangeName(StoreUpdateRequest request)
+    public ErrorOr<Updated> ChangeName(StoreUpdateRequest request)
     {
-        var store = LoggedUser.Get();
+        var store = GetStoreErrorOr();
 
-        store.ChangeName(request.Name);
+        if (store.IsError)
+            return store.Errors;
+        
+        if (string.IsNullOrWhiteSpace(request.Name))
+            return Error.Validation(
+                code: "Store.NameValidation",
+                description: "invalid name"
+            );
+
+        store.Value.ChangeName(request.Name);
+
+        return Result.Updated;
+    }
+
+    private ErrorOr<Store> GetStoreErrorOr()
+    {
+        var user = LoggedUser.Get();
+
+        if (user is null)
+            return Error.Unauthorized(
+                code: "User.Unauthorized",
+                description: "user unauthorized"
+            );
+        
+        return user.Store;
     }
 
     private StoreResponse ToDTO(Store store)

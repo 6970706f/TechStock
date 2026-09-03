@@ -2,7 +2,8 @@ namespace TechStock.Application.DTOs;
 
 public record UserCreateRequest(
     string Name,
-    string Password
+    string Password,
+    string ConfirmPassword
 );
 
 public record UserChangeNameRequest(

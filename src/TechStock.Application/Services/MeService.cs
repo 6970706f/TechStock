@@ -1,3 +1,4 @@
+using ErrorOr;
 using TechStock.Application.DTOs;
 using TechStock.Domain.Entities;
 using TechStock.Infrastructure.Repositories;
@@ -8,31 +9,70 @@ public class MeService(
     UserRepository repository
 )
 {
-    public void Delete()
+    public ErrorOr<Deleted> Delete()
     {
-        repository.Delete(LoggedUser.Get());
+        var user = GetLoggedUserErrorOr();
+
+        if (user.IsError)
+            return user.Errors;
+        
+        repository.Delete(user.Value);
+        LoggedUser.Logout();
+
+        return Result.Deleted;
     }
 
-    public UserResponse GetMe()
+    public ErrorOr<UserResponse> GetMe()
     {
-        return ToDTO(LoggedUser.Get());
+        var user = GetLoggedUserErrorOr();
+
+        if (user.IsError)
+            return user.Errors;
+
+        return ToDTO(user.Value);
     }
 
-    public void ChangeName(UserChangeNameRequest request)
+    public ErrorOr<Updated> ChangeName(UserChangeNameRequest request)
     {
-        var user = LoggedUser.Get();
+        var user = GetLoggedUserErrorOr();
 
-        user.ChangeName(request.Name);
+        if (user.IsError)
+            return user.Errors;
+        
+        if (string.IsNullOrWhiteSpace(request.Name))
+            return Error.Validation(
+                code: "User.NameValidation",
+                description: "invalid name"
+            );
+
+        user.Value.ChangeName(request.Name);
+
+        return Result.Updated;
     }
 
-    public void ChangePassword(UserChangePasswordRequest request)
+    public ErrorOr<Updated> ChangePassword(UserChangePasswordRequest request)
     {
-        var user = LoggedUser.Get();
+        var user = GetLoggedUserErrorOr();
 
-        if (request.OldPassword != user.PasswordHash || request.NewPassword != request.ConfirmPassword)
-            throw new Exception();
+        if (user.IsError)
+            return user.Errors;
+        
+        if (string.IsNullOrWhiteSpace(request.OldPassword))
+            return Error.Validation(
+                code: "User.InvalidCredentials",
+                description: "invalid credentials"
+            );
 
-        user.ChangePassword(request.NewPassword);
+        if (request.OldPassword != user.Value.PasswordHash || 
+        request.NewPassword != request.ConfirmPassword)
+            return Error.Validation(
+                code: "User.InvalidCredentials",
+                description: "invalid credentials"
+            );
+
+        user.Value.ChangePassword(request.NewPassword);
+
+        return Result.Updated;
     }
 
     private UserResponse ToDTO(User user)
@@ -41,5 +81,18 @@ public class MeService(
             user.Id,
             user.Name
         );
+    }
+
+    private ErrorOr<User> GetLoggedUserErrorOr()
+    {
+        var user = LoggedUser.Get();
+
+        if (user is null)
+            return Error.Unauthorized(
+                code: "User.Unauthorized",
+                description: "user unauthorized"
+            );
+        
+        return user;
     }
 }
