@@ -17,6 +17,6 @@ public record UserChangePasswordRequest(
 );
 
 public record UserResponse(
-    int Id,
+    Guid Id,
     string Name
 );

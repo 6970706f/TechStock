@@ -20,7 +20,7 @@ public record ProductMovementRequest(
 );
 
 public record ProductResponse(
-    int Id,
+    Guid Id,
     string Name,
     decimal Price,
     int Quantity

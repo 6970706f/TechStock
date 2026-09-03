@@ -2,14 +2,13 @@ namespace TechStock.Domain.Entities;
 
 public class Product
 {
-    public Product(int id, string name, decimal price, int quantity, Store store)
+    public Product(string name, decimal price, int quantity, Store store)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new Exception();
         if (price <= 0)
             throw new Exception();
-        
-        Id = id;
+
         Name = name;
         Price = price;
         Quantity = quantity;
@@ -18,12 +17,12 @@ public class Product
         Store = store;
     }
 
-    public int Id { get; private set; }
+    public Guid Id { get; private set; } = Guid.NewGuid();
     public string Name { get; private set; }
     public decimal Price { get; private set; }
     public int Quantity { get; private set; }
 
-    public int StoreId { get; private set; }
+    public Guid StoreId { get; private set; }
     public Store Store { get; private set; }
 
     public void ChangeName(string name)

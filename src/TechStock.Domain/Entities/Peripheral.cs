@@ -3,13 +3,12 @@ namespace TechStock.Domain.Entities;
 public class Peripheral : Product
 {
     public Peripheral(
-        int id,
         string name,
         decimal price,
         int quantity,
         Store store,
         string connectionType
-    ) : base(id, name, price, quantity, store)
+    ) : base(name, price, quantity, store)
     {
         if (string.IsNullOrWhiteSpace(connectionType))
             throw new Exception();

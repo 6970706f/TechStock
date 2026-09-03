@@ -15,6 +15,6 @@ public class ProductRepository
     public IEnumerable<Product> GetAll()
         => Products.ToList();
     
-    public Product? GetById(int id)
+    public Product? GetById(Guid id)
         => Products.FirstOrDefault(product => product.Id == id);
 }

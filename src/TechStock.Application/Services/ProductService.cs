@@ -12,7 +12,6 @@ public class ProductService(
 {
     public ErrorOr<Created> Add(ProductCreateRequest request)
     {
-        int id = Random.Shared.Next();
         var store = GetStoreErrorOr();
         var validateProduct = ValidateProduct(request.Name, request.Price, request.Quantity);
 
@@ -23,7 +22,6 @@ public class ProductService(
             return validateProduct.Errors;
 
         var product = new Product(
-            id,
             request.Name,
             request.Price,
             request.Quantity,
@@ -36,7 +34,7 @@ public class ProductService(
         return Result.Created;
     }
 
-    public ErrorOr<Deleted> Delete(int id)
+    public ErrorOr<Deleted> Delete(Guid id)
     {
         var product = GetProductByIdErrorOr(id);
         var store = GetStoreErrorOr();
@@ -53,7 +51,7 @@ public class ProductService(
         return Result.Deleted;
     }
 
-    public ErrorOr<Updated> Update(int id, ProductUpdateRequest request)
+    public ErrorOr<Updated> Update(Guid id, ProductUpdateRequest request)
     {
         var product = GetProductByIdErrorOr(id);
         var validateProduct = ValidateProduct(request.Name, request.Price, request.Quantity);
@@ -76,7 +74,7 @@ public class ProductService(
         return Result.Updated;
     }
 
-    public ErrorOr<ProductResponse> GetById(int id)
+    public ErrorOr<ProductResponse> GetById(Guid id)
     {
         var product = GetProductByIdErrorOr(id);
 
@@ -93,7 +91,7 @@ public class ProductService(
         return products.Select(ToDTO);
     }
 
-    public ErrorOr<Updated> MovementStock(int id, ProductMovementRequest request)
+    public ErrorOr<Updated> MovementStock(Guid id, ProductMovementRequest request)
     {
         var product = GetProductByIdErrorOr(id);
 
@@ -121,7 +119,7 @@ public class ProductService(
         return Result.Updated;
     }
 
-    private ErrorOr<Product> GetProductByIdErrorOr(int id)
+    private ErrorOr<Product> GetProductByIdErrorOr(Guid id)
     {
         var product = repository.GetById(id);
         

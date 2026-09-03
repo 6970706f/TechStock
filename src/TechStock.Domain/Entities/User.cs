@@ -4,14 +4,13 @@ namespace TechStock.Domain.Entities;
 
 public class User
 {
-    public User(int id, string name, string passwordHash, Store store, Role? role)
+    public User(string name, string passwordHash, Store store, Role? role)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new Exception();
         if (string.IsNullOrWhiteSpace(passwordHash))
             throw new Exception();
-        
-        Id = id;
+
         Name = name;
         PasswordHash = passwordHash;
         if (role != null)
@@ -21,12 +20,12 @@ public class User
         Store = store;
     }
 
-    public int Id { get; private set; }
+    public Guid Id { get; private set; } = Guid.NewGuid();
     public string Name { get; private set; }
     public string PasswordHash { get; private set; }
     public Role Role { get; private set; } = Role.User;
 
-    public int StoreId { get; private set; }
+    public Guid StoreId { get; private set; }
     public Store Store { get; private set; } = null!;
 
     public void ChangeName(string name)

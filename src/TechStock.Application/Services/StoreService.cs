@@ -13,7 +13,7 @@ public class StoreService(
 {
     public ErrorOr<Created> Add(StoreCreateRequest storeRequest, UserCreateRequest userRequest)
     {
-        var store = new Store(Random.Shared.Next(), storeRequest.Name);
+        var store = new Store(storeRequest.Name);
 
         if (string.IsNullOrWhiteSpace(userRequest.Name))
             return Error.Validation(
@@ -29,7 +29,6 @@ public class StoreService(
             );
 
         var user = new User(
-            Random.Shared.Next(),
             userRequest.Name,
             userRequest.Password,
             store,

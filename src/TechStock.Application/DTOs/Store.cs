@@ -9,6 +9,6 @@ public record StoreUpdateRequest(
 );
 
 public record StoreResponse(
-    int Id,
+    Guid Id,
     string Name
 );

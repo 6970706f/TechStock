@@ -5,18 +5,11 @@ public static class LoggedUser
     public static User? Current { get; private set; }
 
     public static void Login(User user)
-    {
-        Current = user;
-    }
+        => Current = user;
 
     public static void Logout()
-    {
-        Current = null;
-    }
+        => Current = null;
 
-    public static User Get()
-    {
-        return Current
-            ?? throw new Exception();
-    }
+    public static User? Get()
+        => Current;
 }
