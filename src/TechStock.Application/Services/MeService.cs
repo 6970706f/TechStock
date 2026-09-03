@@ -2,11 +2,13 @@ using ErrorOr;
 using TechStock.Application.DTOs;
 using TechStock.Domain.Entities;
 using TechStock.Infrastructure.Repositories;
+using TechStock.Infrastructure.Services;
 
 namespace TechStock.Application.Services;
 
 public class MeService(
-    UserRepository repository
+    UserRepository repository,
+    PasswordService passwordService
 )
 {
     public ErrorOr<Deleted> Delete()
@@ -63,14 +65,14 @@ public class MeService(
                 description: "invalid credentials"
             );
 
-        if (request.OldPassword != user.Value.PasswordHash || 
+        if (passwordService.VerifyPassword(request.OldPassword, user.Value.PasswordHash) || 
         request.NewPassword != request.ConfirmPassword)
             return Error.Validation(
                 code: "User.InvalidCredentials",
                 description: "invalid credentials"
             );
 
-        user.Value.ChangePassword(request.NewPassword);
+        user.Value.ChangePassword(passwordService.HashPassword(request.NewPassword));
 
         return Result.Updated;
     }

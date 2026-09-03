@@ -11,4 +11,7 @@ public class UserRepository
 
     public void Delete(User user)
         => Users.Remove(user);
+    
+    public User? GetByName(string name)
+        => Users.FirstOrDefault(user => user.Name == name);
 }

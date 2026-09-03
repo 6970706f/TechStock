@@ -16,6 +16,11 @@ public record UserChangePasswordRequest(
     string ConfirmPassword
 );
 
+public record LoginRequest(
+    string Name,
+    string Password
+);
+
 public record UserResponse(
     Guid Id,
     string Name

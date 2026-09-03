@@ -3,12 +3,14 @@ using TechStock.Application.DTOs;
 using TechStock.Domain.Entities;
 using TechStock.Domain.Enums;
 using TechStock.Infrastructure.Repositories;
+using TechStock.Infrastructure.Services;
 
 namespace TechStock.Application.Services;
 
 public class StoreService(
     StoreRepository storeRepository,
-    UserRepository userRepository
+    UserRepository userRepository,
+    PasswordService passwordService
 )
 {
     public ErrorOr<Created> Add(StoreCreateRequest storeRequest, UserCreateRequest userRequest)
@@ -30,7 +32,7 @@ public class StoreService(
 
         var user = new User(
             userRequest.Name,
-            userRequest.Password,
+            passwordService.HashPassword(userRequest.Password),
             store,
             Role.Admin
         );
