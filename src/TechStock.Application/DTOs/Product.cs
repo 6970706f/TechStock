@@ -1,3 +1,5 @@
+using TechStock.Domain.Enums;
+
 namespace TechStock.Application.DTOs;
 
 public record ProductCreateRequest(
@@ -10,6 +12,11 @@ public record ProductUpdateRequest(
     string Name,
     decimal Price,
     int Quantity
+);
+
+public record ProductMovementRequest(
+    int Quantity,
+    ProductMovementType Type
 );
 
 public record ProductResponse(

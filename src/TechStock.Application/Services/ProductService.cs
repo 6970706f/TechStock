@@ -1,5 +1,6 @@
 using TechStock.Application.DTOs;
 using TechStock.Domain.Entities;
+using TechStock.Domain.Enums;
 using TechStock.Infrastructure.Repositories;
 
 namespace TechStock.Application.Services;
@@ -59,6 +60,17 @@ public class ProductService(
         var products = repository.GetAll();
 
         return products.Select(ToDTO);
+    }
+
+    public void MovementStock(int id, ProductMovementRequest request)
+    {
+        var product = GetOrThrow(id);
+
+        if (request.Type == ProductMovementType.Entry)
+            product.AddStock(request.Quantity);
+        
+        if (request.Type == ProductMovementType.Exit)
+            product.RemoveStock(request.Quantity);
     }
 
     private Product GetOrThrow(int id)

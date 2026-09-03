@@ -49,4 +49,23 @@ public class Product
         
         Quantity = quantity;
     }
+
+    public void RemoveStock(int quantity)
+    {
+        if (quantity <= 0)
+            throw new Exception();
+        
+        if (Quantity < quantity)
+            throw new Exception();
+        
+        Quantity -= quantity;
+    }
+
+    public void AddStock(int quantity)
+    {
+        if (quantity <= 0)
+            throw new Exception();
+        
+        Quantity += quantity;
+    }
 }
