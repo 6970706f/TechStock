@@ -14,9 +14,6 @@ public class ProductService(
     {
         var store = GetStoreErrorOr();
         var validateProduct = ValidateProduct(request.Name, request.Price, request.Quantity);
-
-        if (store.IsError)
-            return store.Errors;
         
         if (validateProduct.IsError)
             return validateProduct.Errors;
@@ -53,11 +50,21 @@ public class ProductService(
 
     public ErrorOr<Updated> Update(Guid id, ProductUpdateRequest request)
     {
+        var store = GetStoreErrorOr();
         var product = GetProductByIdErrorOr(id);
         var validateProduct = ValidateProduct(request.Name, request.Price, request.Quantity);
 
+        if (store.IsError)
+            return store.Errors;
+
         if (product.IsError)
             return product.Errors;
+        
+        if (store.Value != product.Value.Store)
+            return Error.Unauthorized(
+                code: "Product.Unauthorized",
+                description: "product does not belong to the store"
+            );
 
         if (validateProduct.IsError)
             return product.Errors;
@@ -84,16 +91,25 @@ public class ProductService(
         return ToDTO(product.Value);
     }
 
-    public IEnumerable<ProductResponse> GetAll()
+    public ErrorOr<IEnumerable<ProductResponse>> GetAllPerStore()
     {
-        var products = repository.GetAll();
+        var store = GetStoreErrorOr();
 
-        return products.Select(ToDTO);
+        if (store.IsError)
+            return store.Errors;
+
+        var products = repository.GetAllPerStore(store.Value);
+
+        return products.Select(ToDTO).ToList();
     }
 
     public ErrorOr<Updated> MovementStock(Guid id, ProductMovementRequest request)
     {
+        var store = GetStoreErrorOr();
         var product = GetProductByIdErrorOr(id);
+        
+        if (store.IsError)
+            return store.Errors;
 
         if (product.IsError)
             return product.Errors;

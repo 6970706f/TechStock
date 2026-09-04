@@ -47,6 +47,7 @@ public class StoreService(
 
     public ErrorOr<Deleted> Delete()
     {
+        UserIsAuthorized();
         var store = GetStoreErrorOr();
 
         if (store.IsError)
@@ -72,6 +73,7 @@ public class StoreService(
 
     public ErrorOr<Updated> ChangeName(StoreUpdateRequest request)
     {
+        UserIsAuthorized();
         var store = GetStoreErrorOr();
 
         if (store.IsError)
@@ -99,6 +101,19 @@ public class StoreService(
             );
         
         return user.Store;
+    }
+
+    private ErrorOr<Success> UserIsAuthorized()
+    {
+        var user = LoggedUser.Get();
+
+        if (user is null || user.Role != Role.Admin)
+            return Error.Unauthorized(
+                code: "User.Unauthorized",
+                description: "user unauthorized"
+            );
+        
+        return Result.Success;
     }
 
     private StoreResponse ToDTO(Store store)

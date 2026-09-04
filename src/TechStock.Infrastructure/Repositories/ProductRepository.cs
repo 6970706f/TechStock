@@ -12,8 +12,18 @@ public class ProductRepository
     public void Delete(Product product)
         => Products.Remove(product);
 
-    public IEnumerable<Product> GetAll()
-        => Products.ToList();
+    public IEnumerable<Product> GetAllPerStore(Store store)
+    {
+        ICollection<Product> products = [];
+
+        foreach (var product in Products)
+        {
+            if (product.Store == store)
+                products.Add(product);
+        }
+
+        return products.ToList();
+    }
     
     public Product? GetById(Guid id)
         => Products.FirstOrDefault(product => product.Id == id);

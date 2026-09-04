@@ -65,7 +65,7 @@ public class MeService(
                 description: "invalid credentials"
             );
 
-        if (passwordService.VerifyPassword(request.OldPassword, user.Value.PasswordHash) || 
+        if (!passwordService.VerifyPassword(request.OldPassword, user.Value.PasswordHash) || 
         request.NewPassword != request.ConfirmPassword)
             return Error.Validation(
                 code: "User.InvalidCredentials",

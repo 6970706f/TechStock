@@ -21,7 +21,7 @@ public class LoginService(
                 description: "user not found"
             );
 
-        if (passwordService.VerifyPassword(request.Password, user.PasswordHash))
+        if (!passwordService.VerifyPassword(request.Password, user.PasswordHash))
             return Error.Failure(
                 code: "Login.Failure",
                 description: "invalid credentials"
