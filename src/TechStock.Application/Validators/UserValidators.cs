@@ -9,7 +9,7 @@ public class UserValidators(
     PasswordService passwordService
 )
 {
-    public ErrorOr<Updated> ChangeNameValidator(UserChangeNameRequest request)
+    public ErrorOr<Success> ChangeNameValidator(UserChangeNameRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Name))
             return Error.Validation(
@@ -17,10 +17,10 @@ public class UserValidators(
                 description: "invalid name"
             );
 
-        return Result.Updated;
+        return Result.Success;
     }
 
-    public ErrorOr<Updated> ChangePasswordValidator(User user, UserChangePasswordRequest request)
+    public ErrorOr<Success> ChangePasswordValidator(User user, UserChangePasswordRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.OldPassword))
             return Error.Validation(
@@ -35,6 +35,6 @@ public class UserValidators(
                 description: "invalid credentials"
             );
         
-        return Result.Updated;
+        return Result.Success;
     }
 }

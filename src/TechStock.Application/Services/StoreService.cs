@@ -1,5 +1,6 @@
 using ErrorOr;
 using TechStock.Application.DTOs;
+using TechStock.Application.Validators;
 using TechStock.Domain.Entities;
 using TechStock.Domain.Enums;
 using TechStock.Infrastructure.Repositories;
@@ -10,84 +11,67 @@ namespace TechStock.Application.Services;
 public class StoreService(
     StoreRepository storeRepository,
     UserRepository userRepository,
-    PasswordService passwordService
+    PasswordService passwordService,
+    StoreValidators storeValidators
 )
 {
     public ErrorOr<Created> Add(StoreCreateRequest storeRequest, UserCreateRequest userRequest)
     {
-        var store = new Store(storeRequest.Name);
+        return storeValidators.AddValidator(storeRequest, userRequest)
+            .Then(_ =>
+            {
+                var store = new Store(storeRequest.Name);
 
-        if (string.IsNullOrWhiteSpace(userRequest.Name))
-            return Error.Validation(
-                code: "User.NameValidation",
-                description: "invalid credentials"
-            );
-        
-        if (string.IsNullOrWhiteSpace(userRequest.Password) ||
-        userRequest.ConfirmPassword != userRequest.Password)
-            return Error.Validation(
-                code: "User.Password",
-                description: "invalid credentials"
-            );
+                var user = new User(
+                    userRequest.Name,
+                    passwordService.HashPassword(userRequest.Password),
+                    store,
+                    Role.Admin
+                );
 
-        var user = new User(
-            userRequest.Name,
-            passwordService.HashPassword(userRequest.Password),
-            store,
-            Role.Admin
-        );
+                store.AddUser(user);
 
-        store.AddUser(user);
+                userRepository.Add(user);
+                storeRepository.Add(store);
 
-        userRepository.Add(user);
-        storeRepository.Add(store);
-
-        return Result.Created;
+                return Result.Created;
+            });
     }
 
     public ErrorOr<Deleted> Delete()
     {
-        UserIsAuthorized();
-        var store = GetStoreErrorOr();
+        return UserIsAuthorized()
+            .Then(_ => GetStoreErrorOr()
+            .Then(store =>
+            {
+                foreach (var user in store.Users)
+                    userRepository.Delete(user);
 
-        if (store.IsError)
-            return store.Errors;
+                storeRepository.Delete(store);
 
-        foreach (var user in store.Value.Users)
-            userRepository.Delete(user);
-
-        storeRepository.Delete(store.Value);
-
-        return Result.Deleted;
+                return Result.Deleted;
+            }));
     }
 
     public ErrorOr<StoreResponse> GetStore()
     {
-        var store = GetStoreErrorOr();
-
-        if (store.IsError)
-            return store.Errors;
-
-        return ToDTO(store.Value);
+        return GetStoreErrorOr()
+            .Then(store =>
+            {
+                return ToDTO(store);
+            });
     }
 
     public ErrorOr<Updated> ChangeName(StoreUpdateRequest request)
     {
-        UserIsAuthorized();
-        var store = GetStoreErrorOr();
+        return UserIsAuthorized()
+            .Then(_ => GetStoreErrorOr()
+            .Then(store =>
+            {
+                store.ChangeName(request.Name);
 
-        if (store.IsError)
-            return store.Errors;
-        
-        if (string.IsNullOrWhiteSpace(request.Name))
-            return Error.Validation(
-                code: "Store.NameValidation",
-                description: "invalid name"
-            );
-
-        store.Value.ChangeName(request.Name);
-
-        return Result.Updated;
+                return Result.Updated;
+            }));
     }
 
     private ErrorOr<Store> GetStoreErrorOr()

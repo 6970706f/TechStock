@@ -15,7 +15,7 @@ public class ProductService(
     public ErrorOr<Created> Add(ProductCreateRequest request)
     {
         return productValidators.AddValidator(request)
-            .Then(_ => GetStoreErrorOr())
+            .Then(_ => GetStoreErrorOr()
             .Then(store =>
             {
                 var product = new Product(
@@ -29,7 +29,7 @@ public class ProductService(
                 repository.Add(product);
 
                 return Result.Created;
-            });
+            }));
     }
 
     public ErrorOr<Deleted> Delete(Guid id)

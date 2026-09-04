@@ -30,7 +30,7 @@ public class ProductValidators
         return Result.Success;
     }
 
-    public ErrorOr<Updated> UpdateValidator(
+    public ErrorOr<Success> UpdateValidator(
         Store store,
         Product product,
         ProductUpdateRequest request
@@ -60,10 +60,10 @@ public class ProductValidators
                 description: "quantity cannot be negative"
             );
         
-        return Result.Updated;
+        return Result.Success;
     }
 
-    public ErrorOr<Updated> MovementStockValidator(Product product, ProductMovementRequest request)
+    public ErrorOr<Success> MovementStockValidator(Product product, ProductMovementRequest request)
     {
         if (request.Quantity < 0)
             return Error.Validation(
@@ -77,6 +77,6 @@ public class ProductValidators
                 description: "insufficient product quantity in stock"
             );
         
-        return Result.Updated;
+        return Result.Success;
     }
 }

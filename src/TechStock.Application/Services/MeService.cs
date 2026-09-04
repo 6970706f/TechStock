@@ -26,7 +26,8 @@ public class MeService(
     }
 
     public ErrorOr<UserResponse> GetMe()
-    {return GetLoggedUserErrorOr()
+    {
+        return GetLoggedUserErrorOr()
             .Then(user =>
             {
                 return ToDTO(user);
