@@ -1,11 +1,10 @@
 using ErrorOr;
 using TechStock.Application.DTOs;
-using TechStock.Domain.Entities;
 using TechStock.Domain.Enums;
 
 namespace TechStock.Application.Validators;
 
-public class ProductValidators
+public class ProductValidator
 {
     public ErrorOr<Success> AddValidator(ProductCreateRequest request)
     {
@@ -24,24 +23,14 @@ public class ProductValidators
         if (request.Quantity <= 0)
             return Error.Validation(
                 code: "Product.QuantityValidation",
-                description: "quantity cannot be negative"
+                description: "quantity must be greater than 0"
             );
         
         return Result.Success;
     }
 
-    public ErrorOr<Success> UpdateValidator(
-        Store store,
-        Product product,
-        ProductUpdateRequest request
-    )
+    public ErrorOr<Success> UpdateValidator(ProductUpdateRequest request)
     {
-        if (store != product.Store)
-            return Error.Unauthorized(
-                code: "Product.Unauthorized",
-                description: "product does not belong to the store"
-            );
-
         if (string.IsNullOrWhiteSpace(request.Name))
             return Error.Validation(
                 code: "Product.NameValidation",
@@ -54,29 +43,26 @@ public class ProductValidators
                 description: "price must be greater than 0"
             );
         
-        if (request.Quantity <= 0)
-            return Error.Validation(
-                code: "Product.QuantityValidation",
-                description: "quantity cannot be negative"
-            );
-        
         return Result.Success;
     }
 
-    public ErrorOr<Success> MovementStockValidator(Product product, ProductMovementRequest request)
+    public ErrorOr<Success> MovementStockValidator(ProductMovementRequest request)
     {
-        if (request.Quantity < 0)
+        if (request.Type != ProductMovementType.Entry ||
+            request.Type != ProductMovementType.Exit)
+        {
+            return Error.Validation(
+                code: "Product.TypeValidation",
+                description: "invalid type"
+            );
+        }
+
+        if (request.Quantity <= 0)
             return Error.Validation(
                 code: "Product.QuantityValidation",
-                description: "quantity cannot be negative"
+                description: "quantity must be greater than 0"
             );
-        
-        if (request.Quantity > product.Quantity && request.Type == ProductMovementType.Exit)
-            return Error.Conflict(
-                code: "Product.QuantityConflict",
-                description: "insufficient product quantity in stock"
-            );
-        
+
         return Result.Success;
     }
 }

@@ -10,7 +10,8 @@ namespace TechStock.Application.Services;
 public class MeService(
     UserRepository repository,
     PasswordService passwordService,
-    UserValidators userValidators
+    UserValidator userValidators,
+    LoginService loginService
 )
 {
     public ErrorOr<Deleted> Delete()
@@ -19,7 +20,7 @@ public class MeService(
             .Then(user =>
             {
                 repository.Delete(user);
-                LoggedUser.Logout();
+                loginService.Logout();
 
                 return Result.Deleted;
             });
@@ -38,8 +39,14 @@ public class MeService(
     {
         return GetLoggedUserErrorOr()
             .Then(user => userValidators.ChangeNameValidator(request)
-            .Then(_ =>
+            .Then<Updated>(_ =>
             {
+                if (repository.ExistsByName(request.Name))
+                    return Error.Conflict(
+                        code: "User.NameConflict",
+                        description: "user with this name already exists"
+                    );
+
                 user.ChangeName(request.Name);
 
                 return Result.Updated;

@@ -8,6 +8,8 @@ public class Product
             throw new Exception();
         if (price <= 0)
             throw new Exception();
+        if (quantity < 0)
+            throw new Exception();
 
         Name = name;
         Price = price;
@@ -41,20 +43,12 @@ public class Product
         Price = price;
     }
 
-    public void ChangeQuantity(int quantity)
-    {
-        if (quantity < 0)
-            throw new Exception();
-        
-        Quantity = quantity;
-    }
-
     public void RemoveStock(int quantity)
     {
         if (quantity <= 0)
             throw new Exception();
         
-        if (Quantity < quantity)
+        if (Quantity <= quantity)
             throw new Exception();
         
         Quantity -= quantity;

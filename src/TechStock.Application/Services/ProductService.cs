@@ -9,15 +9,21 @@ namespace TechStock.Application.Services;
 
 public class ProductService(
     ProductRepository repository,
-    ProductValidators productValidators
+    ProductValidator productValidators
 )
 {
     public ErrorOr<Created> Add(ProductCreateRequest request)
     {
         return productValidators.AddValidator(request)
             .Then(_ => GetStoreErrorOr()
-            .Then(store =>
+            .Then<Created>(store =>
             {
+                if (repository.ExistsByName(request.Name))
+                    return Error.Conflict(
+                        code: "Product.NameConflict",
+                        description: "already exists a product with this name"
+                    );
+
                 var product = new Product(
                     request.Name,
                     request.Price,
@@ -35,7 +41,7 @@ public class ProductService(
     public ErrorOr<Deleted> Delete(Guid id)
     {
         return GetStoreErrorOr()
-            .Then(store => GetProductByIdErrorOr(id)
+            .Then(store => GetProductErrorOr(id, store)
             .Then(product =>
             {
                 repository.Delete(product);
@@ -48,18 +54,21 @@ public class ProductService(
     public ErrorOr<Updated> Update(Guid id, ProductUpdateRequest request)
     {
         return GetStoreErrorOr()
-            .Then(store => GetProductByIdErrorOr(id)
-            .Then(product => productValidators.UpdateValidator(store, product, request)
-            .Then(_ =>
+            .Then(store => GetProductErrorOr(id, store)
+            .Then(product => productValidators.UpdateValidator(request)
+            .Then<Updated>(_ =>
             {
+                if (repository.ExistsByName(request.Name))
+                    return Error.Conflict(
+                        code: "Product.NameConflict",
+                        description: "already exists a product with this name"
+                    );
+
                 if (request.Name != product.Name)
                     product.ChangeName(request.Name);
                 
                 if (request.Price != product.Price)
                     product.ChangePrice(request.Price);
-                
-                if (request.Quantity != product.Quantity)
-                    product.ChangeQuantity(request.Quantity);
                 
                 return Result.Updated;
             })));
@@ -67,11 +76,12 @@ public class ProductService(
 
     public ErrorOr<ProductResponse> GetById(Guid id)
     {
-        return GetProductByIdErrorOr(id)
+        return GetStoreErrorOr()
+            .Then(store => GetProductErrorOr(id, store)
             .Then(product =>
             {
                 return ToDTO(product);
-            });
+            }));
     }
 
     public ErrorOr<IEnumerable<ProductResponse>> GetAllPerStore()
@@ -88,8 +98,8 @@ public class ProductService(
     public ErrorOr<Updated> MovementStock(Guid id, ProductMovementRequest request)
     {
         return GetStoreErrorOr()
-            .Then(store => GetProductByIdErrorOr(id)
-            .Then(product => productValidators.MovementStockValidator(product, request)
+            .Then(store => GetProductErrorOr(id, store)
+            .Then(product => productValidators.MovementStockValidator(request)
             .Then(_ =>
             {
                 if (request.Type == ProductMovementType.Entry)
@@ -100,12 +110,11 @@ public class ProductService(
                 
                 return Result.Updated;
             })));
-
     }
 
-    private ErrorOr<Product> GetProductByIdErrorOr(Guid id)
+    private ErrorOr<Product> GetProductErrorOr(Guid id, Store store)
     {
-        var product = repository.GetById(id);
+        var product = repository.GetById(id, store);
         if (product is null)
             return Error.NotFound(
                 code: "Product.NotFound",

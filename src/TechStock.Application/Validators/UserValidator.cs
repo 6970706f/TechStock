@@ -5,7 +5,7 @@ using TechStock.Infrastructure.Services;
 
 namespace TechStock.Application.Validators;
 
-public class UserValidators(
+public class UserValidator(
     PasswordService passwordService
 )
 {
@@ -29,11 +29,13 @@ public class UserValidators(
             );
 
         if (!passwordService.VerifyPassword(request.OldPassword, user.PasswordHash) || 
-        request.NewPassword != request.ConfirmPassword)
+            request.NewPassword != request.ConfirmPassword)
+        {
             return Error.Validation(
                 code: "User.InvalidCredentials",
                 description: "invalid credentials"
             );
+        }
         
         return Result.Success;
     }

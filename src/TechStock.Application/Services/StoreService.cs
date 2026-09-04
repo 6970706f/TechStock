@@ -12,14 +12,27 @@ public class StoreService(
     StoreRepository storeRepository,
     UserRepository userRepository,
     PasswordService passwordService,
-    StoreValidators storeValidators
+    StoreValidator storeValidators,
+    LoginService loginService
 )
 {
     public ErrorOr<Created> Add(StoreCreateRequest storeRequest, UserCreateRequest userRequest)
     {
         return storeValidators.AddValidator(storeRequest, userRequest)
-            .Then(_ =>
+            .Then<Created>(_ =>
             {
+                if (storeRepository.ExistsByName(storeRequest.Name))
+                    return Error.Conflict(
+                        code: "Store.NameConflict",
+                        description: "store with this name already exists"
+                    );
+                
+                if (userRepository.ExistsByName(userRequest.Name))
+                    return Error.Conflict(
+                        code: "User.NameConflict",
+                        description: "user with this name already exists"
+                    );
+
                 var store = new Store(storeRequest.Name);
 
                 var user = new User(
@@ -76,22 +89,21 @@ public class StoreService(
 
     private ErrorOr<Store> GetStoreErrorOr()
     {
-        var user = LoggedUser.Get();
+        var user = loginService.GetLoggedUserErrorOr();
 
-        if (user is null)
+        if (user.Value is null)
             return Error.Unauthorized(
                 code: "User.Unauthorized",
                 description: "user unauthorized"
             );
-        
-        return user.Store;
+
+        return user.Value.Store;
     }
 
     private ErrorOr<Success> UserIsAuthorized()
     {
-        var user = LoggedUser.Get();
-
-        if (user is null || user.Role != Role.Admin)
+        var user = loginService.GetLoggedUserErrorOr();
+        if (user.Value.Role != Role.Admin)
             return Error.Unauthorized(
                 code: "User.Unauthorized",
                 description: "user unauthorized"

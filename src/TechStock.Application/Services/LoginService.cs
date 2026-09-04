@@ -32,6 +32,19 @@ public class LoginService(
         return Result.Success;
     }
 
+    public ErrorOr<User> GetLoggedUserErrorOr()
+    {
+        var user = LoggedUser.Get();
+
+        if (user is null)
+            return Error.Unauthorized(
+                code: "User.Unauthorized",
+                description: "user unauthorized"
+            );
+        
+        return user;
+    }
+
     public void Logout()
         => LoggedUser.Logout();
 }

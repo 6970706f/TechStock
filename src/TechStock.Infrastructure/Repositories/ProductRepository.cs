@@ -25,6 +25,12 @@ public class ProductRepository
         return products.ToList();
     }
     
-    public Product? GetById(Guid id)
-        => Products.FirstOrDefault(product => product.Id == id);
+    public Product? GetById(Guid id, Store store)
+        => Products.FirstOrDefault(product =>
+                product.Id == id &&
+                product.Store.Id == store.Id
+            );
+
+    public bool ExistsByName(string name)
+        => Products.Any(product => product.Name == name);
 }

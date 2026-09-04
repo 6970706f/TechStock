@@ -10,8 +10,7 @@ public record ProductCreateRequest(
 
 public record ProductUpdateRequest(
     string Name,
-    decimal Price,
-    int Quantity
+    decimal Price
 );
 
 public record ProductMovementRequest(

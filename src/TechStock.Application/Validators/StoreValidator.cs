@@ -3,7 +3,7 @@ using TechStock.Application.DTOs;
 
 namespace TechStock.Application.Validators;
 
-public class StoreValidators
+public class StoreValidator
 {
     public ErrorOr<Success> AddValidator(
         StoreCreateRequest storeRequest,
@@ -13,13 +13,6 @@ public class StoreValidators
         if (string.IsNullOrWhiteSpace(userRequest.Name))
             return Error.Validation(
                 code: "User.NameValidation",
-                description: "invalid credentials"
-            );
-        
-        if (string.IsNullOrWhiteSpace(userRequest.Password) ||
-        userRequest.ConfirmPassword != userRequest.Password)
-            return Error.Validation(
-                code: "User.Password",
                 description: "invalid credentials"
             );
         

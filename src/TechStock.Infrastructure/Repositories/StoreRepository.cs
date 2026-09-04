@@ -11,4 +11,7 @@ public class StoreRepository
     
     public void Delete(Store store)
         => Stores.Remove(store);
+    
+    public bool ExistsByName(string name)
+        => Stores.Any(store => store.Name == name);
 }

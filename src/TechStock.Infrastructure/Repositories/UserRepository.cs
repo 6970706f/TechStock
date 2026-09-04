@@ -14,4 +14,7 @@ public class UserRepository
     
     public User? GetByName(string name)
         => Users.FirstOrDefault(user => user.Name == name);
+    
+    public bool ExistsByName(string name)
+        => Users.Any(user => user.Name == name);
 }
