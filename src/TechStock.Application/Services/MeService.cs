@@ -15,53 +15,46 @@ public class MeService(
 {
     public ErrorOr<Deleted> Delete()
     {
-        var user = GetLoggedUserErrorOr();
-        if (user.IsError)
-            return user.Errors;
-        
-        repository.Delete(user.Value);
-        LoggedUser.Logout();
+        return GetLoggedUserErrorOr()
+            .Then(user =>
+            {
+                repository.Delete(user);
+                LoggedUser.Logout();
 
-        return Result.Deleted;
+                return Result.Deleted;
+            });
     }
 
     public ErrorOr<UserResponse> GetMe()
-    {
-        var user = GetLoggedUserErrorOr();
-        if (user.IsError)
-            return user.Errors;
-
-        return ToDTO(user.Value);
+    {return GetLoggedUserErrorOr()
+            .Then(user =>
+            {
+                return ToDTO(user);
+            });
     }
 
     public ErrorOr<Updated> ChangeName(UserChangeNameRequest request)
     {
-        var user = GetLoggedUserErrorOr();
-        if (user.IsError)
-            return user.Errors;
-        
-        var validation = userValidators.ChangeNameValidator(request);
-        if (validation.IsError)
-            return validation.Errors;
+        return GetLoggedUserErrorOr()
+            .Then(user => userValidators.ChangeNameValidator(request)
+            .Then(_ =>
+            {
+                user.ChangeName(request.Name);
 
-        user.Value.ChangeName(request.Name);
-
-        return Result.Updated;
+                return Result.Updated;
+            }));
     }
 
     public ErrorOr<Updated> ChangePassword(UserChangePasswordRequest request)
     {
-        var user = GetLoggedUserErrorOr();
-        if (user.IsError)
-            return user.Errors;
-        
-        var validation = userValidators.ChangePasswordValidator(user.Value, request);
-        if (validation.IsError)
-            return validation.Errors;
+        return GetLoggedUserErrorOr()
+            .Then(user => userValidators.ChangePasswordValidator(user, request)
+            .Then(_ =>
+            {
+                user.ChangePassword(passwordService.HashPassword(request.NewPassword));
 
-        user.Value.ChangePassword(passwordService.HashPassword(request.NewPassword));
-
-        return Result.Updated;
+                return Result.Updated;
+            }));
     }
 
     private UserResponse ToDTO(User user)

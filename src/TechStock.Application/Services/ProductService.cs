@@ -34,87 +34,73 @@ public class ProductService(
 
     public ErrorOr<Deleted> Delete(Guid id)
     {
-        var store = GetStoreErrorOr();
-        if (store.IsError)
-            return store.Errors;
+        return GetStoreErrorOr()
+            .Then(store => GetProductByIdErrorOr(id)
+            .Then(product =>
+            {
+                repository.Delete(product);
+                store.RemoveProduct(product);
 
-        var product = GetProductByIdErrorOr(id);
-        if (product.IsError)
-            return product.Errors;
-
-        repository.Delete(product.Value);
-        store.Value.RemoveProduct(product.Value);
-
-        return Result.Deleted;
+                return Result.Deleted;
+            }));
     }
 
     public ErrorOr<Updated> Update(Guid id, ProductUpdateRequest request)
     {
-        var store = GetStoreErrorOr();
-        if (store.IsError)
-            return store.Errors;
-
-        var product = GetProductByIdErrorOr(id);
-        if (product.IsError)
-            return product.Errors;
-
-        var validation = productValidators.UpdateValidator(store.Value, product.Value, request);
-        if (validation.IsError)
-            return validation.Errors;
-
-        if (request.Name != product.Value.Name)
-            product.Value.ChangeName(request.Name);
-        
-        if (request.Price != product.Value.Price)
-            product.Value.ChangePrice(request.Price);
-        
-        if (request.Quantity != product.Value.Quantity)
-            product.Value.ChangeQuantity(request.Quantity);
-        
-        return Result.Updated;
+        return GetStoreErrorOr()
+            .Then(store => GetProductByIdErrorOr(id)
+            .Then(product => productValidators.UpdateValidator(store, product, request)
+            .Then(_ =>
+            {
+                if (request.Name != product.Name)
+                    product.ChangeName(request.Name);
+                
+                if (request.Price != product.Price)
+                    product.ChangePrice(request.Price);
+                
+                if (request.Quantity != product.Quantity)
+                    product.ChangeQuantity(request.Quantity);
+                
+                return Result.Updated;
+            })));
     }
 
     public ErrorOr<ProductResponse> GetById(Guid id)
     {
-        var product = GetProductByIdErrorOr(id);
-        if (product.IsError)
-            return product.Errors;
-
-        return ToDTO(product.Value);
+        return GetProductByIdErrorOr(id)
+            .Then(product =>
+            {
+                return ToDTO(product);
+            });
     }
 
     public ErrorOr<IEnumerable<ProductResponse>> GetAllPerStore()
     {
-        var store = GetStoreErrorOr();
-        if (store.IsError)
-            return store.Errors;
+        return GetStoreErrorOr()
+            .Then(store =>
+            {
+                var products = repository.GetAllPerStore(store);
 
-        var products = repository.GetAllPerStore(store.Value);
-
-        return products.Select(ToDTO).ToList();
+                return products.Select(ToDTO);
+            });
     }
 
     public ErrorOr<Updated> MovementStock(Guid id, ProductMovementRequest request)
     {
-        var store = GetStoreErrorOr();
-        if (store.IsError)
-            return store.Errors;
+        return GetStoreErrorOr()
+            .Then(store => GetProductByIdErrorOr(id)
+            .Then(product => productValidators.MovementStockValidator(product, request)
+            .Then(_ =>
+            {
+                if (request.Type == ProductMovementType.Entry)
+                    product.AddStock(request.Quantity);
+                
+                if (request.Type == ProductMovementType.Exit)
+                    product.RemoveStock(request.Quantity);
+                
+                return Result.Updated;
+            })));
 
-        var product = GetProductByIdErrorOr(id);
-        if (product.IsError)
-            return product.Errors;
-        
-        var validation = productValidators.MovementStockValidator(product.Value, request);
-        if (validation.IsError)
-            return validation.Errors;
-
-        if (request.Type == ProductMovementType.Entry)
-            product.Value.AddStock(request.Quantity);
-        
-        if (request.Type == ProductMovementType.Exit)
-            product.Value.RemoveStock(request.Quantity);
-        
-        return Result.Updated;
     }
 
     private ErrorOr<Product> GetProductByIdErrorOr(Guid id)
