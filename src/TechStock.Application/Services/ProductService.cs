@@ -1,5 +1,6 @@
 using ErrorOr;
 using TechStock.Application.DTOs;
+using TechStock.Application.Validators;
 using TechStock.Domain.Entities;
 using TechStock.Domain.Enums;
 using TechStock.Infrastructure.Repositories;
@@ -7,38 +8,37 @@ using TechStock.Infrastructure.Repositories;
 namespace TechStock.Application.Services;
 
 public class ProductService(
-    ProductRepository repository
+    ProductRepository repository,
+    ProductValidators productValidators
 )
 {
     public ErrorOr<Created> Add(ProductCreateRequest request)
     {
-        var store = GetStoreErrorOr();
-        var validateProduct = ValidateProduct(request.Name, request.Price, request.Quantity);
-        
-        if (validateProduct.IsError)
-            return validateProduct.Errors;
+        return productValidators.AddValidator(request)
+            .Then(_ => GetStoreErrorOr())
+            .Then(store =>
+            {
+                var product = new Product(
+                    request.Name,
+                    request.Price,
+                    request.Quantity,
+                    store
+                );
 
-        var product = new Product(
-            request.Name,
-            request.Price,
-            request.Quantity,
-            store.Value
-        );
+                store.AddProduct(product);
+                repository.Add(product);
 
-        store.Value.AddProduct(product);
-        repository.Add(product);
-
-        return Result.Created;
+                return Result.Created;
+            });
     }
 
     public ErrorOr<Deleted> Delete(Guid id)
     {
-        var product = GetProductByIdErrorOr(id);
         var store = GetStoreErrorOr();
-
         if (store.IsError)
             return store.Errors;
 
+        var product = GetProductByIdErrorOr(id);
         if (product.IsError)
             return product.Errors;
 
@@ -51,23 +51,16 @@ public class ProductService(
     public ErrorOr<Updated> Update(Guid id, ProductUpdateRequest request)
     {
         var store = GetStoreErrorOr();
-        var product = GetProductByIdErrorOr(id);
-        var validateProduct = ValidateProduct(request.Name, request.Price, request.Quantity);
-
         if (store.IsError)
             return store.Errors;
 
+        var product = GetProductByIdErrorOr(id);
         if (product.IsError)
             return product.Errors;
-        
-        if (store.Value != product.Value.Store)
-            return Error.Unauthorized(
-                code: "Product.Unauthorized",
-                description: "product does not belong to the store"
-            );
 
-        if (validateProduct.IsError)
-            return product.Errors;
+        var validation = productValidators.UpdateValidator(store.Value, product.Value, request);
+        if (validation.IsError)
+            return validation.Errors;
 
         if (request.Name != product.Value.Name)
             product.Value.ChangeName(request.Name);
@@ -84,7 +77,6 @@ public class ProductService(
     public ErrorOr<ProductResponse> GetById(Guid id)
     {
         var product = GetProductByIdErrorOr(id);
-
         if (product.IsError)
             return product.Errors;
 
@@ -94,7 +86,6 @@ public class ProductService(
     public ErrorOr<IEnumerable<ProductResponse>> GetAllPerStore()
     {
         var store = GetStoreErrorOr();
-
         if (store.IsError)
             return store.Errors;
 
@@ -106,25 +97,16 @@ public class ProductService(
     public ErrorOr<Updated> MovementStock(Guid id, ProductMovementRequest request)
     {
         var store = GetStoreErrorOr();
-        var product = GetProductByIdErrorOr(id);
-        
         if (store.IsError)
             return store.Errors;
 
+        var product = GetProductByIdErrorOr(id);
         if (product.IsError)
             return product.Errors;
-
-        if (request.Quantity < 0)
-            return Error.Validation(
-                code: "Product.QuantityValidation",
-                description: "quantity cannot be negative"
-            );
         
-        if (request.Quantity > product.Value.Quantity && request.Type == ProductMovementType.Exit)
-            return Error.Conflict(
-                code: "Product.QuantityConflict",
-                description: "insufficient product quantity in stock"
-            );
+        var validation = productValidators.MovementStockValidator(product.Value, request);
+        if (validation.IsError)
+            return validation.Errors;
 
         if (request.Type == ProductMovementType.Entry)
             product.Value.AddStock(request.Quantity);
@@ -138,7 +120,6 @@ public class ProductService(
     private ErrorOr<Product> GetProductByIdErrorOr(Guid id)
     {
         var product = repository.GetById(id);
-        
         if (product is null)
             return Error.NotFound(
                 code: "Product.NotFound",
@@ -151,7 +132,6 @@ public class ProductService(
     private ErrorOr<Store> GetStoreErrorOr()
     {
         var user = LoggedUser.Get();
-
         if (user is null)
             return Error.Unauthorized(
                 code: "User.Unauthorized",
@@ -159,29 +139,6 @@ public class ProductService(
             );
         
         return user.Store;
-    }
-
-    private ErrorOr<Success> ValidateProduct(string name, decimal price, int quantity)
-    {
-        if (string.IsNullOrWhiteSpace(name))
-            return Error.Validation(
-                code: "Product.NameValidation",
-                description: "invalid name"
-            );
-
-        if (price <= 0)
-            return Error.Validation(
-                code: "Product.PriceValidation",
-                description: "price must be greater than 0"
-            );
-        
-        if (quantity < 0)
-            return Error.Validation(
-                code: "Product.QuantityValidation",
-                description: "quantity cannot be negative"
-            );
-        
-        return Result.Success;
     }
 
     private ProductResponse ToDTO(Product product)
